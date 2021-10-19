@@ -1,4 +1,4 @@
-package org.min;
+package org.min.chapter01;
 
 public class Calculator {
     int add(int i, int j) {

@@ -1,4 +1,4 @@
-package org.min;
+package org.min.chapter01;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
