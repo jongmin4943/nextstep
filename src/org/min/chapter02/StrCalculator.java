@@ -30,8 +30,14 @@ public class StrCalculator {
 
         String[] allNumbers = str.split("["+ all +"]");
 
-        for(String num : allNumbers) {
-           result += Integer.parseInt(num);
+        try {
+            for(String num : allNumbers) {
+                int addingNum = Integer.parseInt(num);
+                if(addingNum < 0) throw new RuntimeException();
+                result += addingNum;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         return result;
