@@ -11,36 +11,57 @@ import java.util.List;
  * 3. 문자열 계산기에 음수를 전달하는 경우 RuntimeException 으로 예외 처리한다.
  * 4. String Class 를 적극적으로 이용해본다.
  */
+
+/*
+리팩토링
+메소드가 한가지 책임만 가지도록 구현
+인덴트 깊이를 최대한 1단계 유지
+else 사용 지양
+ */
 public class StrCalculator {
     private final List<String> separatorList = new ArrayList<>(Arrays.asList(",",":","/","\n"));
 
     public int calculate(String str) {
-        if(str == null || str.trim().equals("")) return 0;
-        int result = 0;
-        int nextLineIdx = str.indexOf("\n");
-        if(str.startsWith("//")) {
-            String newSeparator = str.substring(2,nextLineIdx);
-            separatorList.add(newSeparator);
-            str = str.substring(nextLineIdx+1);
+        if(isBlank(str)) return 0;
+        if(checkNewSeparator(str)) {
+            str = extractSeparator(str);
         }
+        String all = makeRegx();
+        String[] allNumbers = str.split("["+ all +"]");
+
+        return sum(allNumbers);
+    }
+
+    private boolean isBlank(String str) {
+        return str == null || str.trim().isEmpty();
+    }
+
+    private int sum(String[] allNumbers) {
+        int result = 0;
+        for(String num : allNumbers) {
+            int addingNum = Integer.parseInt(num);
+            if(addingNum < 0) throw new RuntimeException();
+            result += addingNum;
+        }
+        return result;
+    }
+
+    private String makeRegx() {
         StringBuilder all = new StringBuilder();
         for(String s : separatorList) {
             all.append(s);
         }
-
-        String[] allNumbers = str.split("["+ all +"]");
-
-        try {
-            for(String num : allNumbers) {
-                int addingNum = Integer.parseInt(num);
-                if(addingNum < 0) throw new RuntimeException();
-                result += addingNum;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return result;
+        return "["+ all +"]";
     }
 
+    private String extractSeparator(String str) {
+        int nextLineIdx = str.indexOf("\n");
+        String newSeparator = str.substring(2,nextLineIdx);
+        separatorList.add(newSeparator);
+        return str.substring(nextLineIdx+1);
+    }
+
+    private boolean checkNewSeparator(String str) {
+        return str.startsWith("//");
+    }
 }
