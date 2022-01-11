@@ -15,7 +15,17 @@
 * 각 요구사항을 구현하는 것이 중요한 것이 아니라 구현 과정을 통해 학습한 내용을 인식하는 것이 배움에 중요하다. 
 
 ### 요구사항 1 - http://localhost:8080/index.html로 접속시 응답
-* 
+* InputStream 를 Character 로 읽어들이기 위해 BufferedReader 로 변환한다.
+* InputStreamReader 를 이용해 InputStream 을 읽어 Reader 객체로 변환 후 BufferedReader 로 변환한다.
+* 헤더의 마지막까지 while 문을 이용해 readLine 함수를 이용해 확인한다.
+* 들어온 라인 중 시작이 GET 인 경우를 찾는다.
+* 이때 정보들은 공백을 이용해 표시되므로 ex) GET /index.html HTTP/1.1
+* spilt 함수를 이용하면 0번째는 요청 method, 두번째는 요청 url 이 된다.
+* 요청 url 을 추출한다음 Files.readAllBytes 를 이용해 webapp 폴더 안의 요청된 파일을 찾아 읽어
+* byte 로 변환해 body 에 넣어준뒤 응답한다.
+----------------------------------------
+1장에서 배웠든 단일책임원칙으로 나눠보려 했지만 생각보다 쉽지않다. 어디까지 쪼개야하는지 아직 감이 잘 안온다.
+일단 내가 생각했을때 이정도면 편하게 다음에도 활용 가능하고 복잡하지 않을정도로만 쪼개보았다.
 
 ### 요구사항 2 - get 방식으로 회원가입
 * 

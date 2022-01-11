@@ -4,7 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="52502495-7633-4b74-855b-7bf630f3412a" name="Changes" comment="문자열 계산기 리팩토링" />
+    <list default="true" id="52502495-7633-4b74-855b-7bf630f3412a" name="Changes" comment="문자열 계산기 리팩토링">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -87,8 +89,10 @@
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../byul-works/byul-works-back" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/2장" />
     <property name="node.js.detected.package.eslint" value="true" />
     <property name="node.js.detected.package.tslint" value="true" />
     <property name="node.js.selected.package.eslint" value="(autodetect)" />
@@ -213,7 +217,8 @@
       <workItem from="1635769208487" duration="896000" />
       <workItem from="1641736819367" duration="49000" />
       <workItem from="1641737672726" duration="6000" />
-      <workItem from="1641811037481" duration="4043000" />
+      <workItem from="1641811037481" duration="4638000" />
+      <workItem from="1641894743878" duration="1199000" />
     </task>
     <task id="LOCAL-00001" summary="문자열 계산기 2.3.1 요구사항">
       <created>1634656541130</created>
