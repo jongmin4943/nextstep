@@ -1,5 +1,9 @@
 package model;
 
+import util.HttpRequestUtils;
+
+import java.util.Map;
+
 public class User {
     private String userId;
     private String password;
@@ -11,6 +15,15 @@ public class User {
         this.password = password;
         this.name = name;
         this.email = email;
+    }
+
+    public User(String params) {
+        // 넘어온 params 를 추출해 유저 생성
+        Map<String, String> paramsMap = HttpRequestUtils.parseQueryString(params);
+        this.userId = paramsMap.get("userId");
+        this.password = paramsMap.get("password");
+        this.name = paramsMap.get("name");
+        this.email =paramsMap.get("email");
     }
 
     public String getUserId() {
