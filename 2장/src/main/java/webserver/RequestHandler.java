@@ -32,6 +32,7 @@ public class RequestHandler extends Thread {
         try (InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
             DataOutputStream dos = new DataOutputStream(out);
             byte[] body = "Hello World".getBytes();
+            boolean isCreate = false;
             // InputStream 을 Character input stream 으로 변환하기위해 BufferedReader 를 사용한다.
             // InputStreamReader 를 이용해 InputStream 을 읽어서 Reader 객체를 만든다.
             BufferedReader br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
@@ -59,22 +60,25 @@ public class RequestHandler extends Thread {
                         }
                     }
                     // url 이 뭔지 판단하는 함수.
-                    if(Request.checkPathVariables(url,"user","create")) {
+                    isCreate = Request.checkPathVariables(url,"user","create");
+                    if(isCreate) {
                         while(!"".equals(br.readLine())) {} // header 종료 후 body 읽기
                         String requestBody = util.IOUtils.readData(br,contentLength);
                         // user/create 일경우 유저를 넘어온 params 값으로 생성한다.
                         User user = new User(requestBody);
                         System.out.println(user);
-                        Response.writeResponseHeader(302,"Found",dos,body.length);
                         url="/index.html";
                     }
-
                     body = Files.readAllBytes(new File("./webapp" + url).toPath());
                     break;
                 }
             }
-            Response.writeResponseHeader(200,"OK",dos,body.length);
-            Response.writeResponseBody(dos,body);
+            if(isCreate) {
+                Response.writeResponseHeader(302,"Found",dos,body.length);
+            } else {
+                Response.writeResponseHeader(200,"OK",dos,body.length);
+                Response.writeResponseBody(dos,body);
+            }
         } catch (IOException e) {
             log.error(e.getMessage());
         }
