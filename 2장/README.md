@@ -55,7 +55,11 @@ Response Header 에 Location : 주소 를 넣으면 url 를 바꿀수 있는걸
 라는 의구심이 계속 들기 시작했다.
 
 ### 요구사항 5 - cookie
-* 
+* 로그인이 성공하면 /index.html 로 실패하면 /user/login_failed.html
+* 로 이동한다. 성공 여부에 따라 헤더에 Cookie 를 logined=true,false 로 넣어준다.
+-------------------------------------
+헤더를 넣어주는 코드를 정리 해야할때가 온것같다. 생각보다 헤더에 넣어야할 정보가
+많고 나중에 http status code 의 종류가 늘어나면 감당이 어려울것 같다 느꼈다.
 
 ### 요구사항 6 - stylesheet 적용
 * 

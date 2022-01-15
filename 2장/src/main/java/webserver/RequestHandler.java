@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.common.net.HttpHeaders;
+import db.DataBase;
 import http.Request;
 import http.Response;
 import model.User;
@@ -30,16 +31,17 @@ public class RequestHandler extends Thread {
         log.debug("New Client Connect! Connected IP : {}, Port : {}", connection.getInetAddress(),
                 connection.getPort());
         try (InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
-            DataOutputStream dos = new DataOutputStream(out);
+
             byte[] body = "Hello World".getBytes();
             boolean isCreate = false;
+            boolean isLogin = false;
+            boolean validateUser = false;
             // InputStream 을 Character input stream 으로 변환하기위해 BufferedReader 를 사용한다.
             // InputStreamReader 를 이용해 InputStream 을 읽어서 Reader 객체를 만든다.
             BufferedReader br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
             // 헤더의 마지막은 공백이므로 공백이 아닐때까지 읽어들인다.
-            while(true) {
                 String line = br.readLine();
-                if(line == null) break; // null 이 들어올경우 반복문을 종료한다.
+                if(line == null) return;
                 System.out.println(line);
                 String[] requestMethodAndUrl = Request.extractRequestMethodAndUrl(line);
                 String requestMethod = requestMethodAndUrl[0];
@@ -61,22 +63,41 @@ public class RequestHandler extends Thread {
                     }
                     // url 이 뭔지 판단하는 함수.
                     isCreate = Request.checkPathVariables(url,"user","create");
+                    isLogin = Request.checkPathVariables(url,"user","login");
                     if(isCreate) {
                         while(!"".equals(br.readLine())) {} // header 종료 후 body 읽기
                         String requestBody = util.IOUtils.readData(br,contentLength);
                         // user/create 일경우 유저를 넘어온 params 값으로 생성한다.
                         User user = new User(requestBody);
+                        DataBase.addUser(user);
                         System.out.println(user);
                         url="/index.html";
                     }
+                    if(isLogin) {
+                        while(!"".equals(br.readLine())) {} // header 종료 후 body 읽기
+                        String requestBody = util.IOUtils.readData(br,contentLength);
+                        // user/create 일경우 유저를 넘어온 params 값으로 생성한다.
+                        Map<String, String> queryString = HttpRequestUtils.parseQueryString(requestBody);
+                        String userId = queryString.get("userId");
+                        User user = DataBase.findUserById(userId);
+                        validateUser =user.validateUser(requestBody);
+                        if(validateUser) {
+                            url="/index.html";
+                        } else {
+                            url="/user/login_failed.html";
+                        }
+                        System.out.println(user);
+                    }
                     body = Files.readAllBytes(new File("./webapp" + url).toPath());
-                    break;
-                }
             }
+            DataOutputStream dos = new DataOutputStream(out);
             if(isCreate) {
-                Response.writeResponseHeader(302,"Found",dos,body.length);
+                Response.writeResponseHeader(302,"Found",dos,body.length,"");
+            } else if(isLogin) {
+                String cookie = validateUser ? "logined=true":"logined=false";
+                Response.writeResponseHeader(302,"Found",dos,body.length,cookie);
             } else {
-                Response.writeResponseHeader(200,"OK",dos,body.length);
+                Response.writeResponseHeader(200,"OK",dos,body.length,"");
                 Response.writeResponseBody(dos,body);
             }
         } catch (IOException e) {

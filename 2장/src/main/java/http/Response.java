@@ -2,6 +2,7 @@ package http;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import util.StringUtil;
 import webserver.RequestHandler;
 
 import java.io.DataOutputStream;
@@ -13,13 +14,14 @@ public class Response {
 
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
 
-    public static void writeResponseHeader(int status, String statusName, DataOutputStream dos, int lengthOfBodyContent) {
+    public static void writeResponseHeader(int status, String statusName, DataOutputStream dos, int lengthOfBodyContent, String cookie) {
         String firstLine = "HTTP/1.1 " + status + " " +  statusName;
         List<String> nextLines = new ArrayList<>();
         switch (status) {
-            case 200:
-                nextLines = response200Header(lengthOfBodyContent);
+            case 200: {
+                    nextLines =  response200Header(lengthOfBodyContent);
                 break;
+            }
             case 302:
                 nextLines = response302Header();
                 break;
@@ -28,6 +30,9 @@ public class Response {
             dos.writeBytes(firstLine + " \r\n");
             for (String nextLine : nextLines){
                 dos.writeBytes(nextLine+" \r\n");
+            }
+            if(StringUtil.hasText(cookie)) {
+                dos.writeBytes("Set-Cookie: " + cookie + " \r\n");
             }
             dos.writeBytes("\r\n");
         } catch (IOException e) {

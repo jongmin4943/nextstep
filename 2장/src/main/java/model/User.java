@@ -1,6 +1,7 @@
 package model;
 
 import util.HttpRequestUtils;
+import util.StringUtil;
 
 import java.util.Map;
 
@@ -45,5 +46,16 @@ public class User {
     @Override
     public String toString() {
         return "User [userId=" + userId + ", password=" + password + ", name=" + name + ", email=" + email + "]";
+    }
+
+    public boolean validateUser(String params) {
+        Map<String, String> paramsMap = HttpRequestUtils.parseQueryString(params);
+        String userId = paramsMap.get("userId");
+        String password = paramsMap.get("password");
+        return (StringUtil.hasText(userId) && StringUtil.hasText(password) && validatePassword(userId,password));
+    }
+
+    public boolean validatePassword(String userId, String password) {
+        return this.userId.equals(userId) && this.password.equals(password);
     }
 }
