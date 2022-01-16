@@ -2,9 +2,11 @@ package webserver;
 
 import java.io.*;
 import java.net.Socket;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -35,6 +37,7 @@ public class RequestHandler extends Thread {
             byte[] body = "Hello World".getBytes();
             boolean isCreate = false;
             boolean isLogin = false;
+            boolean isUserList = false;
             boolean validateUser = false;
             // InputStream 을 Character input stream 으로 변환하기위해 BufferedReader 를 사용한다.
             // InputStreamReader 를 이용해 InputStream 을 읽어서 Reader 객체를 만든다.
@@ -51,21 +54,25 @@ public class RequestHandler extends Thread {
                     String url = Request.extractUrl(requestUrl);
                     String params = Request.extractParams(requestUrl); // params 가 있으면 ? 뒤의 String 이 추출된다.
                     int contentLength = 0;
-
+                    String loginCookie = "";
                     // 헤더에서 Content-Length 추출
                     while(!"".equals(line = br.readLine())) {
                         if(line == null) break;
                         if(line.startsWith("Content-Length")) {
                             String[] temp = line.split(" ");
                             contentLength = Integer.parseInt(temp[1]);
-                            break;
+                        }
+                        if(line.startsWith("Cookie")) {
+                            String[] token = line.split(" ");
+                            Map<String, String> cookieMap = HttpRequestUtils.parseCookies(token[1]);
+                            loginCookie = cookieMap.get("logined");
                         }
                     }
                     // url 이 뭔지 판단하는 함수.
                     isCreate = Request.checkPathVariables(url,"user","create");
                     isLogin = Request.checkPathVariables(url,"user","login");
+                    isUserList = Request.checkPathVariables(url,"user","list");
                     if(isCreate) {
-                        while(!"".equals(br.readLine())) {} // header 종료 후 body 읽기
                         String requestBody = util.IOUtils.readData(br,contentLength);
                         // user/create 일경우 유저를 넘어온 params 값으로 생성한다.
                         User user = new User(requestBody);
@@ -74,7 +81,6 @@ public class RequestHandler extends Thread {
                         url="/index.html";
                     }
                     if(isLogin) {
-                        while(!"".equals(br.readLine())) {} // header 종료 후 body 읽기
                         String requestBody = util.IOUtils.readData(br,contentLength);
                         // user/create 일경우 유저를 넘어온 params 값으로 생성한다.
                         Map<String, String> queryString = HttpRequestUtils.parseQueryString(requestBody);
@@ -86,7 +92,36 @@ public class RequestHandler extends Thread {
                         } else {
                             url="/user/login_failed.html";
                         }
-                        System.out.println(user);
+                    }
+                    if (isUserList) {
+                        if(StringUtil.hasText(loginCookie) && Boolean.parseBoolean(loginCookie)) {
+                            int idx = 3;
+                            Collection<User> userList = DataBase.findAll();
+                            StringBuilder sb = new StringBuilder();
+                            sb.append("<tr>");
+                            for(User user : userList) {
+                                sb.append("<th scope=\"row\">")
+                                    .append(idx)
+                                    .append("</th><td>")
+                                    .append(user.getUserId())
+                                    .append("</td> <td>")
+                                    .append(user.getName())
+                                    .append("</td> <td>")
+                                    .append(user.getEmail())
+                                    .append("</td><td><a href=\"#\" class=\"btn btn-success\" role=\"button\">수정</a></td></tr>");
+                                idx++;
+                            }
+                            url += ".html";
+                            String fileString = new String(Files.readAllBytes(new File("./webapp" + url).toPath()));
+                            fileString = fileString.replace("{{user_list}}", URLDecoder.decode(sb.toString(), "UTF-8"));
+                            body = fileString.getBytes(StandardCharsets.UTF_8);
+                            DataOutputStream dos = new DataOutputStream(out);
+                            Response.writeResponseHeader(200,"OK",dos,body.length,"");
+                            Response.writeResponseBody(dos,body);
+                            return;
+                        } else {
+                            url = "/login.html";
+                        }
                     }
                     body = Files.readAllBytes(new File("./webapp" + url).toPath());
             }
