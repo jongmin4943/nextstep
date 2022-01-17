@@ -14,12 +14,12 @@ public class Response {
 
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
 
-    public static void writeResponseHeader(int status, String statusName, DataOutputStream dos, int lengthOfBodyContent, String cookie) {
+    public static void writeResponseHeader(int status, String statusName, DataOutputStream dos, int lengthOfBodyContent, String cookie,String type) {
         String firstLine = "HTTP/1.1 " + status + " " +  statusName;
         List<String> nextLines = new ArrayList<>();
         switch (status) {
             case 200: {
-                    nextLines =  response200Header(lengthOfBodyContent);
+                    nextLines =  response200Header(lengthOfBodyContent,type);
                 break;
             }
             case 302:
@@ -40,9 +40,9 @@ public class Response {
         }
     }
 
-    private static List<String> response200Header(int lengthOfBodyContent) {
+    private static List<String> response200Header(int lengthOfBodyContent,String type) {
         List<String> header = new ArrayList<>();
-        header.add("Content-Type: text/html;charset=utf-8");
+        header.add("Content-Type: text/"+type+";charset=utf-8");
         header.add("Content-Length: " + lengthOfBodyContent);
         return header;
     }

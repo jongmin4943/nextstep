@@ -38,6 +38,7 @@ public class RequestHandler extends Thread {
             boolean isCreate = false;
             boolean isLogin = false;
             boolean isUserList = false;
+            boolean isCss = false;
             boolean validateUser = false;
             // InputStream 을 Character input stream 으로 변환하기위해 BufferedReader 를 사용한다.
             // InputStreamReader 를 이용해 InputStream 을 읽어서 Reader 객체를 만든다.
@@ -49,6 +50,7 @@ public class RequestHandler extends Thread {
                 String[] requestMethodAndUrl = Request.extractRequestMethodAndUrl(line);
                 String requestMethod = requestMethodAndUrl[0];
                 String requestUrl = requestMethodAndUrl[1];
+                isCss = Request.extractExtension(requestUrl).equals("css");
                 // requestUrl 이 있다면 webapp 폴더에 있는 요청된 파일을 읽어서 byte 로 변환해 body 에 넣어주고 반복문을 종료한다.
                 if(StringUtil.hasText(requestUrl)) {
                     String url = Request.extractUrl(requestUrl);
@@ -116,23 +118,25 @@ public class RequestHandler extends Thread {
                             fileString = fileString.replace("{{user_list}}", URLDecoder.decode(sb.toString(), "UTF-8"));
                             body = fileString.getBytes(StandardCharsets.UTF_8);
                             DataOutputStream dos = new DataOutputStream(out);
-                            Response.writeResponseHeader(200,"OK",dos,body.length,"");
+                            Response.writeResponseHeader(200,"OK",dos,body.length,"","html");
                             Response.writeResponseBody(dos,body);
                             return;
                         } else {
-                            url = "/login.html";
+                            url = "/user/login.html";
                         }
                     }
                     body = Files.readAllBytes(new File("./webapp" + url).toPath());
             }
             DataOutputStream dos = new DataOutputStream(out);
             if(isCreate) {
-                Response.writeResponseHeader(302,"Found",dos,body.length,"");
+                Response.writeResponseHeader(302,"Found",dos,body.length,"","html");
             } else if(isLogin) {
                 String cookie = validateUser ? "logined=true":"logined=false";
-                Response.writeResponseHeader(302,"Found",dos,body.length,cookie);
+                Response.writeResponseHeader(302,"Found",dos,body.length,cookie,"html");
+            }else if(isCss) {
+                Response.writeResponseHeader(200,"OK",dos,body.length,"","css");
             } else {
-                Response.writeResponseHeader(200,"OK",dos,body.length,"");
+                Response.writeResponseHeader(200,"OK",dos,body.length,"","html");
                 Response.writeResponseBody(dos,body);
             }
         } catch (IOException e) {

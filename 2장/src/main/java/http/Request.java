@@ -45,4 +45,11 @@ public class Request {
         if(index < 0) return "";
         return requestUrl.substring(index+1);
     }
+
+    public static String extractExtension(String requestUrl) {
+        int idx = requestUrl.lastIndexOf(".");
+        if(idx == -1) return "";
+        return requestUrl.substring(idx+1);
+
+    }
 }
