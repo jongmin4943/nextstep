@@ -1,0 +1,155 @@
+package model;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import util.HttpRequestUtils;
+
+import java.io.BufferedReader;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
+public class Request {
+    private static final Logger log = LoggerFactory.getLogger(Request.class);
+    private static final List<String> requestMethods = Arrays.asList("GET","POST","PUT","DELETE");
+    private String requestMethod;
+    private String requestUrl;
+    private String url;
+    private String params;
+    private int contentLength = 0;
+    private String cookie;
+    private String requestBody;
+
+
+    public Request(BufferedReader br) {
+        try {
+            String firstLine = br.readLine();
+            if(firstLine == null) return;
+            String[] requestMethodAndUrl = extractRequestMethodAndUrl(firstLine);
+            this.requestMethod = requestMethodAndUrl[0];
+            this.requestUrl = requestMethodAndUrl[1];
+            this.url = extractUrl(this.requestUrl);
+            // params 가 있으면 ? 뒤의 String 이 추출된다
+            this.params = extractParams(this.requestUrl);
+            String nextLine;
+            // 헤더의 마지막은 공백이므로 공백이 아닐때까지 읽어들인다.
+            // 헤더에서 Content-Length 와 Cookie 추출
+            while(!"".equals(nextLine = br.readLine())) {
+                if(nextLine == null) break;
+                if(nextLine.startsWith("Content-Length")) {
+                    String[] temp = nextLine.split(" ");
+                    this.contentLength = Integer.parseInt(temp[1]);
+                }
+                if(nextLine.startsWith("Cookie")) {
+                    String[] token = nextLine.split(" ");
+                    Map<String, String> cookieMap = HttpRequestUtils.parseCookies(token[1]);
+                    this.cookie = cookieMap.get("logined");
+                }
+            }
+            this.requestBody = util.IOUtils.readData(br,contentLength);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+        }
+
+    }
+
+    public String getRequestMethod() {
+        return requestMethod;
+    }
+
+    public void setRequestMethod(String requestMethod) {
+        this.requestMethod = requestMethod;
+    }
+
+    public String getRequestUrl() {
+        return requestUrl;
+    }
+
+    public void setRequestUrl(String requestUrl) {
+        this.requestUrl = requestUrl;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    public String getParams() {
+        return params;
+    }
+
+    public void setParams(String params) {
+        this.params = params;
+    }
+
+    public int getContentLength() {
+        return contentLength;
+    }
+
+    public void setContentLength(int contentLength) {
+        this.contentLength = contentLength;
+    }
+
+    public String getCookie() {
+        return cookie;
+    }
+
+    public void setCookie(String cookie) {
+        this.cookie = cookie;
+    }
+
+    public String getRequestBody() {
+        return requestBody;
+    }
+
+    public void setRequestBody(String requestBody) {
+        this.requestBody = requestBody;
+    }
+
+    public boolean checkPathVariables(String ... paths) {
+        // url 은 시작이 / 이므로 없애준다.
+        String tempUrl = this.url.substring(1);
+
+        // ex) user/create -> [user, create]
+        String[] pathVariables = tempUrl.split("/");
+        boolean result = true;
+        // 넘어온 체크할 paths 를 비교한다.
+        for (int i = 0; i < paths.length; i++) {
+            if(!paths[i].equals(pathVariables[i])) {
+                return false;
+            }
+        }
+        return result;
+    }
+
+    public static String[] extractRequestMethodAndUrl(String line) {
+        // 줄마다 띄어쓰기로 정보가 나눠져 있으므로 split 을 한다.
+        String[] token = line.split(" ");
+        // 첫번째 값이 requestMethods 값중 하나일 경우 두번째 값은 요청 url 이 된다.
+        if(requestMethods.contains(token[0])) {
+            return token;
+        }
+        return new String[]{"",""};
+    }
+
+    public static String extractUrl(String requestUrl) {
+        int index = requestUrl.indexOf("?");
+        if("/".equals(requestUrl)) requestUrl = "/index.html";
+        return index == -1 ? requestUrl : requestUrl.substring(0,index);
+    }
+
+    public static String extractParams(String requestUrl) {
+        int index = requestUrl.indexOf("?");
+        if(index == -1) return "";
+        return requestUrl.substring(index+1);
+    }
+
+    public static String extractExtension(String requestUrl) {
+        int idx = requestUrl.lastIndexOf(".");
+        if(idx == -1) return "";
+        return requestUrl.substring(idx+1);
+    }
+}

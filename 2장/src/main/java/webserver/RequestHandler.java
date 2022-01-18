@@ -5,15 +5,12 @@ import java.net.Socket;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
-import com.google.common.net.HttpHeaders;
 import db.DataBase;
-import http.Request;
 import http.Response;
+import model.Request;
 import model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,112 +29,59 @@ public class RequestHandler extends Thread {
     public void run() {
         log.debug("New Client Connect! Connected IP : {}, Port : {}", connection.getInetAddress(),
                 connection.getPort());
+        // try () <- 괄호 안에서 자원을 얻어쓰면 try 가 종료되면 자동으로 close 된다.
         try (InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
-
-            byte[] body = "Hello World".getBytes();
-            boolean isCreate = false;
-            boolean isLogin = false;
-            boolean isUserList = false;
-            boolean isCss = false;
-            boolean validateUser = false;
             // InputStream 을 Character input stream 으로 변환하기위해 BufferedReader 를 사용한다.
             // InputStreamReader 를 이용해 InputStream 을 읽어서 Reader 객체를 만든다.
             BufferedReader br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
-            // 헤더의 마지막은 공백이므로 공백이 아닐때까지 읽어들인다.
-                String line = br.readLine();
-                if(line == null) return;
-                System.out.println(line);
-                String[] requestMethodAndUrl = Request.extractRequestMethodAndUrl(line);
-                String requestMethod = requestMethodAndUrl[0];
-                String requestUrl = requestMethodAndUrl[1];
-                isCss = Request.extractExtension(requestUrl).equals("css");
-                // requestUrl 이 있다면 webapp 폴더에 있는 요청된 파일을 읽어서 byte 로 변환해 body 에 넣어주고 반복문을 종료한다.
-                if(StringUtil.hasText(requestUrl)) {
-                    String url = Request.extractUrl(requestUrl);
-                    String params = Request.extractParams(requestUrl); // params 가 있으면 ? 뒤의 String 이 추출된다.
-                    int contentLength = 0;
-                    String loginCookie = "";
-                    // 헤더에서 Content-Length 추출
-                    while(!"".equals(line = br.readLine())) {
-                        if(line == null) break;
-                        if(line.startsWith("Content-Length")) {
-                            String[] temp = line.split(" ");
-                            contentLength = Integer.parseInt(temp[1]);
-                        }
-                        if(line.startsWith("Cookie")) {
-                            String[] token = line.split(" ");
-                            Map<String, String> cookieMap = HttpRequestUtils.parseCookies(token[1]);
-                            loginCookie = cookieMap.get("logined");
-                        }
-                    }
-                    // url 이 뭔지 판단하는 함수.
-                    isCreate = Request.checkPathVariables(url,"user","create");
-                    isLogin = Request.checkPathVariables(url,"user","login");
-                    isUserList = Request.checkPathVariables(url,"user","list");
-                    if(isCreate) {
-                        String requestBody = util.IOUtils.readData(br,contentLength);
-                        // user/create 일경우 유저를 넘어온 params 값으로 생성한다.
-                        User user = new User(requestBody);
-                        DataBase.addUser(user);
-                        System.out.println(user);
-                        url="/index.html";
-                    }
-                    if(isLogin) {
-                        String requestBody = util.IOUtils.readData(br,contentLength);
-                        // user/create 일경우 유저를 넘어온 params 값으로 생성한다.
-                        Map<String, String> queryString = HttpRequestUtils.parseQueryString(requestBody);
-                        String userId = queryString.get("userId");
-                        User user = DataBase.findUserById(userId);
-                        validateUser =user.validateUser(requestBody);
-                        if(validateUser) {
-                            url="/index.html";
-                        } else {
-                            url="/user/login_failed.html";
-                        }
-                    }
-                    if (isUserList) {
-                        if(StringUtil.hasText(loginCookie) && Boolean.parseBoolean(loginCookie)) {
-                            int idx = 3;
-                            Collection<User> userList = DataBase.findAll();
-                            StringBuilder sb = new StringBuilder();
-                            sb.append("<tr>");
-                            for(User user : userList) {
-                                sb.append("<th scope=\"row\">")
-                                    .append(idx)
-                                    .append("</th><td>")
-                                    .append(user.getUserId())
-                                    .append("</td> <td>")
-                                    .append(user.getName())
-                                    .append("</td> <td>")
-                                    .append(user.getEmail())
-                                    .append("</td><td><a href=\"#\" class=\"btn btn-success\" role=\"button\">수정</a></td></tr>");
-                                idx++;
-                            }
-                            url += ".html";
-                            String fileString = new String(Files.readAllBytes(new File("./webapp" + url).toPath()));
-                            fileString = fileString.replace("{{user_list}}", URLDecoder.decode(sb.toString(), "UTF-8"));
-                            body = fileString.getBytes(StandardCharsets.UTF_8);
-                            DataOutputStream dos = new DataOutputStream(out);
-                            Response.writeResponseHeader(200,"OK",dos,body.length,"","html");
-                            Response.writeResponseBody(dos,body);
-                            return;
-                        } else {
-                            url = "/user/login.html";
-                        }
-                    }
-                    body = Files.readAllBytes(new File("./webapp" + url).toPath());
-            }
-            DataOutputStream dos = new DataOutputStream(out);
-            if(isCreate) {
-                Response.writeResponseHeader(302,"Found",dos,body.length,"","html");
-            } else if(isLogin) {
+            // 요청 객체 생성
+            Request request = new Request(br);
+            if (Request.extractExtension(request.getRequestUrl()).equals("css")) {
+                // css 파일 응답
+                Response.response(out,request.getUrl(),200,"OK","","css");
+            } else if (request.checkPathVariables("user","create")) {
+                User user = new User(request.getRequestBody());
+                DataBase.addUser(user);
+                request.setUrl("/index.html");
+                Response.response(out,request.getUrl(),302,"Found","","html");
+            } else if (request.checkPathVariables("user","login")) {
+                String requestBody = request.getRequestBody();
+                Map<String, String> queryString = HttpRequestUtils.parseQueryString(requestBody);
+                String userId = queryString.get("userId");
+                User user = DataBase.findUserById(userId);
+                boolean validateUser = user != null && user.validateUser(requestBody);
+                request.setUrl(validateUser ? "/index.html": "/user/login_failed.html");
                 String cookie = validateUser ? "logined=true":"logined=false";
-                Response.writeResponseHeader(302,"Found",dos,body.length,cookie,"html");
-            }else if(isCss) {
-                Response.writeResponseHeader(200,"OK",dos,body.length,"","css");
+                int status  = validateUser ? 302 : 401;
+                String statusName  = validateUser ? "Found" : "Unauthorized";
+                Response.response(out,request.getUrl(),status,statusName,cookie,"html");
+            } else if (request.checkPathVariables("user","list")) {
+                String loginCookie = request.getCookie();
+                if(StringUtil.hasText(request.getCookie()) && Boolean.parseBoolean(loginCookie)) {
+                    int idx = 3;
+                    Collection<User> userList = DataBase.findAll();
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("<tr>");
+                    for(User user : userList) {
+                        sb.append("<th scope=\"row\">")
+                            .append(idx)
+                            .append("</th><td>")
+                            .append(user.getUserId())
+                            .append("</td> <td>")
+                            .append(user.getName())
+                            .append("</td> <td>")
+                            .append(user.getEmail())
+                            .append("</td><td><a href=\"#\" class=\"btn btn-success\" role=\"button\">수정</a></td></tr>");
+                        idx++;
+                    }
+                    request.setUrl("/user/list.html");
+                    Response.responseWithTemplate(out,request.getUrl(),200,"OK","","html",sb.toString());
+                } else {
+                    request.setUrl("/user/login.html");
+                    Response.response(out,request.getUrl(),401,"Unauthorized","","html");
+                }
             } else {
-                Response.writeResponseHeader(200,"OK",dos,body.length,"","html");
-                Response.writeResponseBody(dos,body);
+                Response.response(out,request.getUrl(),200,"OK","","html");
             }
         } catch (IOException e) {
             log.error(e.getMessage());
