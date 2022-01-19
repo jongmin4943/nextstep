@@ -56,8 +56,9 @@ public class RequestHandler extends Thread {
                 String statusName  = validateUser ? "Found" : "Unauthorized";
                 Response.response(out,request.getUrl(),status,statusName,cookie,"html");
             } else if (request.checkPathVariables("user","list")) {
-                String loginCookie = request.getCookie();
-                if(StringUtil.hasText(request.getCookie()) && Boolean.parseBoolean(loginCookie)) {
+                Map<String, String> cookie = request.getCookie();
+                String loginCookie = cookie.get("logined");
+                if(StringUtil.hasText(loginCookie) && Boolean.parseBoolean(loginCookie)) {
                     int idx = 3;
                     Collection<User> userList = DataBase.findAll();
                     StringBuilder sb = new StringBuilder();

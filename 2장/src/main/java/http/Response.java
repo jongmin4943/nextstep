@@ -35,7 +35,7 @@ public class Response {
         writeResponse(status, statusName, cookie, type, dos, body);
     }
 
-    private static void writeResponse(int status, String statusName, String cookie, String type, DataOutputStream dos, byte[] body) {
+    public static void writeResponse(int status, String statusName, String cookie, String type, DataOutputStream dos, byte[] body) {
         Response.writeResponseHeader(status, statusName, dos, body.length, cookie, type);
         Response.writeResponseBody(dos, body);
     }

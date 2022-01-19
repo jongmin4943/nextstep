@@ -6,6 +6,7 @@ import util.HttpRequestUtils;
 
 import java.io.BufferedReader;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -17,9 +18,9 @@ public class Request {
     private String url;
     private String params;
     private int contentLength = 0;
-    private String cookie;
+    private Map<String, String> header = new HashMap<>();
+    private Map<String, String> cookie = new HashMap<>();
     private String requestBody;
-
 
     public Request(BufferedReader br) {
         try {
@@ -33,20 +34,15 @@ public class Request {
             this.params = extractParams(this.requestUrl);
             String nextLine;
             // 헤더의 마지막은 공백이므로 공백이 아닐때까지 읽어들인다.
-            // 헤더에서 Content-Length 와 Cookie 추출
+            // 헤더를 map 형태로 추출
             while(!"".equals(nextLine = br.readLine())) {
                 if(nextLine == null) break;
-                if(nextLine.startsWith("Content-Length")) {
-                    String[] temp = nextLine.split(" ");
-                    this.contentLength = Integer.parseInt(temp[1]);
-                }
-                if(nextLine.startsWith("Cookie")) {
-                    String[] token = nextLine.split(" ");
-                    Map<String, String> cookieMap = HttpRequestUtils.parseCookies(token[1]);
-                    this.cookie = cookieMap.get("logined");
-                }
+                String[] temp = nextLine.split(":");
+                header.put(temp[0].trim(),temp[1].trim());
             }
+            this.cookie = HttpRequestUtils.parseCookies(header.get("Cookie"));
             this.requestBody = util.IOUtils.readData(br,contentLength);
+            this.contentLength = Integer.parseInt(header.get("Content-Length"));
         } catch (Exception e) {
             log.error(e.getMessage());
         }
@@ -93,12 +89,12 @@ public class Request {
         this.contentLength = contentLength;
     }
 
-    public String getCookie() {
-        return cookie;
+    public Map<String,String> getHeader() {
+        return header;
     }
 
-    public void setCookie(String cookie) {
-        this.cookie = cookie;
+    public void setHeader(Map<String,String> header) {
+        this.header = header;
     }
 
     public String getRequestBody() {
@@ -107,6 +103,14 @@ public class Request {
 
     public void setRequestBody(String requestBody) {
         this.requestBody = requestBody;
+    }
+
+    public Map<String, String> getCookie() {
+        return cookie;
+    }
+
+    public void setCookie(Map<String, String> cookie) {
+        this.cookie = cookie;
     }
 
     public boolean checkPathVariables(String ... paths) {
