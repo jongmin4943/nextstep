@@ -41,8 +41,8 @@ public class Request {
                 header.put(temp[0].trim(),temp[1].trim());
             }
             this.cookie = HttpRequestUtils.parseCookies(header.get("Cookie"));
-            this.requestBody = util.IOUtils.readData(br,contentLength);
             this.contentLength = Integer.parseInt(header.get("Content-Length"));
+            this.requestBody = util.IOUtils.readData(br,contentLength);
         } catch (Exception e) {
             log.error(e.getMessage());
         }
@@ -77,6 +77,10 @@ public class Request {
         return params;
     }
 
+    public String getParameter(String key) {
+        return HttpRequestUtils.parseQueryString(params).get(key);
+    }
+
     public void setParams(String params) {
         this.params = params;
     }
@@ -93,12 +97,20 @@ public class Request {
         return header;
     }
 
+    public String getHeader(String key) {
+        return header.get(key);
+    }
+
     public void setHeader(Map<String,String> header) {
         this.header = header;
     }
 
     public String getRequestBody() {
         return requestBody;
+    }
+
+    public String getRequestBody(String key) {
+        return HttpRequestUtils.parseQueryString(requestBody).get(key);
     }
 
     public void setRequestBody(String requestBody) {
