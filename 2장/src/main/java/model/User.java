@@ -48,10 +48,7 @@ public class User {
         return "User [userId=" + userId + ", password=" + password + ", name=" + name + ", email=" + email + "]";
     }
 
-    public boolean validateUser(String params) {
-        Map<String, String> paramsMap = HttpRequestUtils.parseQueryString(params);
-        String userId = paramsMap.get("userId");
-        String password = paramsMap.get("password");
+    public boolean validateUser(String userId, String password) {
         return (StringUtil.hasText(userId) && StringUtil.hasText(password) && validatePassword(userId,password));
     }
 

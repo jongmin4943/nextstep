@@ -1,6 +1,6 @@
 package util;
 
-import model.Response;
+import http.Response;
 import org.junit.Test;
 
 import java.io.FileNotFoundException;

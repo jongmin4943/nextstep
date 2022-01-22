@@ -1,21 +1,18 @@
 package webserver;
 
-import java.io.*;
-import java.net.Socket;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.util.Collection;
-import java.util.Map;
-
 import db.DataBase;
+import http.Request;
 import http.Response;
-import model.Request;
 import model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import util.HttpRequestUtils;
 import util.StringUtil;
+
+import java.io.*;
+import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.util.Collection;
+import java.util.Map;
 
 public class RequestHandler extends Thread {
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
@@ -36,53 +33,46 @@ public class RequestHandler extends Thread {
             BufferedReader br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
             // 요청 객체 생성
             Request request = new Request(br);
+            Response response = new Response(out);
             if (Request.extractExtension(request.getRequestUrl()).equals("css")) {
                 // css 파일 응답
-                Response.response(out,request.getUrl(),200,"OK","","css");
+                response.forward(request.getRequestUrl());
             } else if (request.checkPathVariables("user","create")) {
                 User user = new User(request.getRequestBody());
                 DataBase.addUser(user);
-                request.setUrl("/index.html");
-                Response.response(out,request.getUrl(),302,"Found","","html");
+                response.sendRedirect("/index.html");
             } else if (request.checkPathVariables("user","login")) {
-                String requestBody = request.getRequestBody();
-                Map<String, String> queryString = HttpRequestUtils.parseQueryString(requestBody);
-                String userId = queryString.get("userId");
+                String userId = request.getRequestBody("userId");
+                String password = request.getRequestBody("password");
                 User user = DataBase.findUserById(userId);
-                boolean validateUser = user != null && user.validateUser(requestBody);
-                request.setUrl(validateUser ? "/index.html": "/user/login_failed.html");
+                boolean validateUser = user != null && user.validateUser(userId,password);
+                String redirectUrl = validateUser ? "/index.html": "/user/login_failed.html";
                 String cookie = validateUser ? "logined=true":"logined=false";
-                int status  = validateUser ? 302 : 401;
-                String statusName  = validateUser ? "Found" : "Unauthorized";
-                Response.response(out,request.getUrl(),status,statusName,cookie,"html");
+                response.addHeader("Set-Cookie",cookie);
+                response.sendRedirect(redirectUrl);
             } else if (request.checkPathVariables("user","list")) {
                 Map<String, String> cookie = request.getCookie();
                 String loginCookie = cookie.get("logined");
                 if(StringUtil.hasText(loginCookie) && Boolean.parseBoolean(loginCookie)) {
-                    int idx = 3;
                     Collection<User> userList = DataBase.findAll();
                     StringBuilder sb = new StringBuilder();
                     sb.append("<tr>");
                     for(User user : userList) {
                         sb.append("<th scope=\"row\">")
-                            .append(idx)
                             .append("</th><td>")
                             .append(user.getUserId())
                             .append("</td> <td>")
                             .append(user.getName())
                             .append("</td> <td>")
                             .append(user.getEmail())
-                            .append("</td><td><a href=\"#\" class=\"btn btn-success\" role=\"button\">수정</a></td></tr>");
-                        idx++;
+                            .append("</td></tr>");
                     }
-                    request.setUrl("/user/list.html");
-                    Response.responseWithTemplate(out,request.getUrl(),200,"OK","","html",sb.toString());
+                    response.forwardBody(sb.toString());
                 } else {
-                    request.setUrl("/user/login.html");
-                    Response.response(out,request.getUrl(),401,"Unauthorized","","html");
+                    response.sendRedirect("/user/login.html");
                 }
             } else {
-                Response.response(out,request.getUrl(),200,"OK","","html");
+                response.forward(request.getUrl());
             }
         } catch (IOException e) {
             log.error(e.getMessage());

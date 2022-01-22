@@ -1,6 +1,6 @@
 package util;
 
-import model.Request;
+import http.Request;
 import org.junit.Test;
 
 import java.io.BufferedReader;
