@@ -5,6 +5,9 @@ import org.slf4j.LoggerFactory;
 import util.HttpRequestUtils;
 
 import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -22,7 +25,10 @@ public class Request {
     private Map<String, String> cookie = new HashMap<>();
     private String requestBody;
 
-    public Request(BufferedReader br) {
+    public Request(InputStream in) {
+        // InputStream 을 Character input stream 으로 변환하기위해 BufferedReader 를 사용한다.
+        // InputStreamReader 를 이용해 InputStream 을 읽어서 Reader 객체를 만든다.
+        BufferedReader br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
         try {
             String firstLine = br.readLine();
             if(firstLine == null) return;

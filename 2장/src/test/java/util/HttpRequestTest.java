@@ -17,7 +17,7 @@ public class HttpRequestTest {
     @Test
     public void request_GET() throws Exception{
         InputStream in = new FileInputStream(testDirectory + "Http_GET.txt");
-        Request request = new Request(new BufferedReader(new InputStreamReader(in)));
+        Request request = new Request(in);
 
         assertEquals("GET",request.getRequestMethod());
         assertEquals("/user/create",request.getUrl());
@@ -28,7 +28,7 @@ public class HttpRequestTest {
     @Test
     public void request_POST() throws Exception{
         InputStream in = new FileInputStream(testDirectory + "Http_POST.txt");
-        Request request = new Request(new BufferedReader(new InputStreamReader(in)));
+        Request request = new Request(in);
 
         assertEquals("POST",request.getRequestMethod());
         assertEquals("/user/create",request.getUrl());

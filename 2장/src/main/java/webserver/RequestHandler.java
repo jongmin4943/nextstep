@@ -1,5 +1,9 @@
 package webserver;
 
+import controller.Controller;
+import controller.CreateUserController;
+import controller.ListUserController;
+import controller.LoginController;
 import db.DataBase;
 import http.Request;
 import http.Response;
@@ -12,6 +16,7 @@ import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 public class RequestHandler extends Thread {
@@ -28,51 +33,20 @@ public class RequestHandler extends Thread {
                 connection.getPort());
         // try () <- 괄호 안에서 자원을 얻어쓰면 try 가 종료되면 자동으로 close 된다.
         try (InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
-            // InputStream 을 Character input stream 으로 변환하기위해 BufferedReader 를 사용한다.
-            // InputStreamReader 를 이용해 InputStream 을 읽어서 Reader 객체를 만든다.
-            BufferedReader br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
             // 요청 객체 생성
-            Request request = new Request(br);
+            Request request = new Request(in);
+            // 응답 객체 생성
             Response response = new Response(out);
-            if (Request.extractExtension(request.getRequestUrl()).equals("css")) {
-                // css 파일 응답
-                response.forward(request.getRequestUrl());
-            } else if (request.checkPathVariables("user","create")) {
-                User user = new User(request.getRequestBody());
-                DataBase.addUser(user);
-                response.sendRedirect("/index.html");
-            } else if (request.checkPathVariables("user","login")) {
-                String userId = request.getRequestBody("userId");
-                String password = request.getRequestBody("password");
-                User user = DataBase.findUserById(userId);
-                boolean validateUser = user != null && user.validateUser(userId,password);
-                String redirectUrl = validateUser ? "/index.html": "/user/login_failed.html";
-                String cookie = validateUser ? "logined=true":"logined=false";
-                response.addHeader("Set-Cookie",cookie);
-                response.sendRedirect(redirectUrl);
-            } else if (request.checkPathVariables("user","list")) {
-                Map<String, String> cookie = request.getCookie();
-                String loginCookie = cookie.get("logined");
-                if(StringUtil.hasText(loginCookie) && Boolean.parseBoolean(loginCookie)) {
-                    Collection<User> userList = DataBase.findAll();
-                    StringBuilder sb = new StringBuilder();
-                    sb.append("<tr>");
-                    for(User user : userList) {
-                        sb.append("<th scope=\"row\">")
-                            .append("</th><td>")
-                            .append(user.getUserId())
-                            .append("</td> <td>")
-                            .append(user.getName())
-                            .append("</td> <td>")
-                            .append(user.getEmail())
-                            .append("</td></tr>");
-                    }
-                    response.forwardBody(sb.toString());
-                } else {
-                    response.sendRedirect("/user/login.html");
-                }
+            // 요청 객체에서 url을 따온다
+            String path = request.getUrl();
+            // 요청 url 로 등록된 controller 에서 controller를 가져온다.
+            Controller controller = RequestMapping.getController(path);
+            // 없으면 그대로 파일만 내보내준다.
+            if (controller == null) {
+                response.forward(path);
             } else {
-                response.forward(request.getUrl());
+                // 있으면 service 를 호출해 로직 진행 후 내보낸다.
+                controller.service(request, response);
             }
         } catch (IOException e) {
             log.error(e.getMessage());
