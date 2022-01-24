@@ -8,8 +8,8 @@ import model.User;
 public class LoginController extends AbstractController {
     @Override
     public void doPost(Request request, Response response) {
-        String userId = request.getRequestBody("userId");
-        String password = request.getRequestBody("password");
+        String userId = request.getParameter("userId");
+        String password = request.getParameter("password");
         User user = DataBase.findUserById(userId);
         boolean validateUser = user != null && user.validateUser(userId,password);
         String redirectUrl = validateUser ? "/index.html": "/user/login_failed.html";

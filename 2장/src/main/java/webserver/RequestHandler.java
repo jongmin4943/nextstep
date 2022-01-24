@@ -38,11 +38,12 @@ public class RequestHandler extends Thread {
             // 응답 객체 생성
             Response response = new Response(out);
             // 요청 객체에서 url을 따온다
-            String path = request.getUrl();
+            String path = request.getPath();
             // 요청 url 로 등록된 controller 에서 controller를 가져온다.
             Controller controller = RequestMapping.getController(path);
             // 없으면 그대로 파일만 내보내준다.
             if (controller == null) {
+                if(path.equals("/")) path = "/index.html";
                 response.forward(path);
             } else {
                 // 있으면 service 를 호출해 로직 진행 후 내보낸다.

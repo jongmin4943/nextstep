@@ -7,13 +7,11 @@ import model.User;
 import util.StringUtil;
 
 import java.util.Collection;
-import java.util.Map;
 
 public class ListUserController extends AbstractController{
     @Override
     public void doGet(Request request, Response response) {
-        Map<String, String> cookie = request.getCookie();
-        String loginCookie = cookie.get("logined");
+        String loginCookie = request.getCookie("logined");
         if(StringUtil.hasText(loginCookie) && Boolean.parseBoolean(loginCookie)) {
             Collection<User> userList = DataBase.findAll();
             StringBuilder sb = new StringBuilder();
