@@ -27,21 +27,25 @@ public class Request {
             BufferedReader br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
             requestLine = new RequestLine(createRequestLine(br));
             // 헤더를 map 형태로 추출
-            extractedHeaders(br);
+            extractHeaders(br);
             this.cookie = HttpRequestUtils.parseCookies(header.get("Cookie"));
-            if("POST".equals(getMethod())) {
-                String body = IOUtils.readData(br, Integer.parseInt(header.get("Content-Length")));
-                params = HttpRequestUtils.parseQueryString(body);
-            } else {
-                params = HttpRequestUtils.parseQueryString(requestLine.getQueryString());
-            }
+            extractParams(br);
         } catch (Exception e) {
             log.error(e.getMessage());
         }
 
     }
 
-    private void extractedHeaders(BufferedReader br) throws IOException {
+    private void extractParams(BufferedReader br) throws IOException {
+        if(Method.valueOf(getMethod()).isPost()) {
+            String body = IOUtils.readData(br, Integer.parseInt(header.get("Content-Length")));
+            params = HttpRequestUtils.parseQueryString(body);
+        } else {
+            params = HttpRequestUtils.parseQueryString(requestLine.getQueryString());
+        }
+    }
+
+    private void extractHeaders(BufferedReader br) throws IOException {
         String nextLine;
         // 헤더의 마지막은 공백이므로 공백이 아닐때까지 읽어들인다.
         while(!"".equals(nextLine = br.readLine())) {
