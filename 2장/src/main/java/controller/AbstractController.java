@@ -1,14 +1,15 @@
 package controller;
 
+import http.Method;
 import http.Request;
 import http.Response;
 
 public abstract class AbstractController implements Controller{
     @Override
     public void service(Request request, Response response) {
-        String requestMethod = request.getMethod();
-        if("GET".equals(requestMethod)) doGet(request,response);
-        else if("POST".equals(requestMethod)) doPost(request,response);
+        Method requestMethod = request.getMethod();
+        if(requestMethod.isPost()) doPost(request,response);
+        else doGet(request,response);
     }
 
     public void doGet(Request request, Response response){

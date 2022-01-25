@@ -37,7 +37,7 @@ public class Request {
     }
 
     private void extractParams(BufferedReader br) throws IOException {
-        if(Method.valueOf(getMethod()).isPost()) {
+        if(getMethod().isPost()) {
             String body = IOUtils.readData(br, Integer.parseInt(header.get("Content-Length")));
             params = HttpRequestUtils.parseQueryString(body);
         } else {
@@ -75,7 +75,7 @@ public class Request {
         return params.get(key);
     }
 
-    public String getMethod() {
+    public Method getMethod() {
         return requestLine.getMethod();
     }
 
