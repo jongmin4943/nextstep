@@ -16,7 +16,6 @@ import java.util.Map;
 public class Request {
     private static final Logger log = LoggerFactory.getLogger(Request.class);
     private Map<String, String> header = new HashMap<>();
-    private Map<String, String> cookie = new HashMap<>();
     private Map<String, String> params = new HashMap<>();
     private RequestLine requestLine;
 
@@ -28,7 +27,6 @@ public class Request {
             requestLine = new RequestLine(createRequestLine(br));
             // 헤더를 map 형태로 추출
             extractHeaders(br);
-            this.cookie = HttpRequestUtils.parseCookies(header.get("Cookie"));
             extractParams(br);
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -67,8 +65,12 @@ public class Request {
         return header.get(key);
     }
 
-    public String getCookie(String key) {
-        return cookie.get(key);
+    public Cookie getCookies() {
+        return new Cookie(getHeader("Cookie"));
+    }
+
+    public Session getSession() {
+        return Sessions.getSession(getCookies().getCookie("JSESSIONID"));
     }
 
     public String getParameter(String key) {

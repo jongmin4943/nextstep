@@ -3,6 +3,7 @@ package controller;
 import db.DataBase;
 import http.Request;
 import http.Response;
+import http.Session;
 import model.User;
 import util.StringUtil;
 
@@ -12,7 +13,7 @@ public class ListUserController extends AbstractController{
     @Override
     public void doGet(Request request, Response response) {
         String loginCookie = request.getCookie("logined");
-        if(StringUtil.hasText(loginCookie) && Boolean.parseBoolean(loginCookie)) {
+        if(isLogined(request.getSession())) {
             Collection<User> userList = DataBase.findAll();
             StringBuilder sb = new StringBuilder();
             sb.append("<tr>");
@@ -30,5 +31,10 @@ public class ListUserController extends AbstractController{
         } else {
             response.sendRedirect("/user/login.html");
         }
+    }
+
+    private boolean isLogined(Session session) {
+        Object user = session.getAttribute("user");
+        return user != null;
     }
 }

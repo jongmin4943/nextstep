@@ -10,6 +10,7 @@ import http.Response;
 import model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import util.HttpRequestUtils;
 import util.StringUtil;
 
 import java.io.*;
@@ -18,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class RequestHandler extends Thread {
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
@@ -37,6 +39,11 @@ public class RequestHandler extends Thread {
             Request request = new Request(in);
             // 응답 객체 생성
             Response response = new Response(out);
+
+            if(request.getCookies().getCookie("JSESSIONID") == null) {
+                response.addHeader("Set-Cookie","JSESSIONID=" + UUID.randomUUID());
+            }
+
             // 요청 객체에서 url을 따온다
             String path = request.getPath();
             // 요청 url 로 등록된 controller 에서 controller를 가져온다.
@@ -53,4 +60,5 @@ public class RequestHandler extends Thread {
             log.error(e.getMessage());
         }
     }
+
 }

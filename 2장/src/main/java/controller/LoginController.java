@@ -3,6 +3,7 @@ package controller;
 import db.DataBase;
 import http.Request;
 import http.Response;
+import http.Session;
 import model.User;
 
 public class LoginController extends AbstractController {
@@ -12,9 +13,13 @@ public class LoginController extends AbstractController {
         String password = request.getParameter("password");
         User user = DataBase.findUserById(userId);
         boolean validateUser = user != null && user.validateUser(userId,password);
-        String redirectUrl = validateUser ? "/index.html": "/user/login_failed.html";
-        String cookie = validateUser ? "logined=true":"logined=false";
-        response.addHeader("Set-Cookie",cookie);
-        response.sendRedirect(redirectUrl);
+        if(validateUser) {
+            Session session = request.getSession();
+            session.setAttribute("user",user);
+            response.sendRedirect("/index.html");
+        } else {
+            response.sendRedirect("/user/login_failed.html");
+        }
+
     }
 }
