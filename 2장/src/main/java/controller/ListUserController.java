@@ -5,14 +5,12 @@ import http.Request;
 import http.Response;
 import http.Session;
 import model.User;
-import util.StringUtil;
 
 import java.util.Collection;
 
 public class ListUserController extends AbstractController{
     @Override
     public void doGet(Request request, Response response) {
-        String loginCookie = request.getCookie("logined");
         if(isLogined(request.getSession())) {
             Collection<User> userList = DataBase.findAll();
             StringBuilder sb = new StringBuilder();
