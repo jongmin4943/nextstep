@@ -3,10 +3,17 @@ package core.mvc;
 import java.util.HashMap;
 import java.util.Map;
 
-import next.web.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import next.controller.CreateUserController;
+import next.controller.HomeController;
+import next.controller.ListUserController;
+import next.controller.LoginController;
+import next.controller.LogoutController;
+import next.controller.ProfileController;
+import next.controller.UpdateFormUserController;
+import next.controller.UpdateUserController;
 
 public class RequestMapping {
     private static final Logger logger = LoggerFactory.getLogger(DispatcherServlet.class);
