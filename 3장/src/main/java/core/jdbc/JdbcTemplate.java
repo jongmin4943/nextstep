@@ -9,59 +9,80 @@ import java.util.List;
 
 public class JdbcTemplate {
     public void update(String sql, PreparedStatementSetter pss) throws DataAccessException {
-        try (Connection con = ConnectionManager.getConnection();
-             PreparedStatement pstmt = con.prepareStatement(sql)) {
-            pss.values(pstmt);
+        try (Connection conn = ConnectionManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pss.setParameters(pstmt);
             pstmt.executeUpdate();
         } catch (SQLException e) {
             throw new DataAccessException(e);
         }
     }
 
-    public void executeUpdate(String sql, Object... parameters) {
-        PreparedStatementSetter pss = createPreparedStatementSetter(parameters);
-        this.update(sql,pss);
+    public void update(String sql, Object... parameters) {
+        update(sql, createPreparedStatementSetter(parameters));
     }
 
-    public <T> List<T> query(String sql, PreparedStatementSetter pss, RowMapper<T> rm) throws DataAccessException {
-        ResultSet rs = null;
-        try (Connection con = ConnectionManager.getConnection();
-             PreparedStatement pstmt = con.prepareStatement(sql)){
-            pss.values(pstmt);
-            rs = pstmt.executeQuery();
-            List<T> result = new ArrayList<>();
+    public void update(PreparedStatementCreator psc, KeyHolder holder) {
+        try (Connection conn = ConnectionManager.getConnection()) {
+            PreparedStatement ps = psc.createPreparedStatement(conn);
+            ps.executeUpdate();
+
+            ResultSet rs = ps.getGeneratedKeys();
             if (rs.next()) {
-                result.add(rm.mapRow(rs));
+                holder.setId(rs.getLong(1));
             }
-            return result;
+            rs.close();
         } catch (SQLException e) {
             throw new DataAccessException(e);
         }
     }
 
-    public <T> T queryForObject(String sql, PreparedStatementSetter pss, RowMapper<T> rm) throws DataAccessException {
-        List<T> result = query(sql,pss,rm);
-        if(result.isEmpty()) {
+    public <T> T queryForObject(String sql, RowMapper<T> rm, PreparedStatementSetter pss) {
+        List<T> list = query(sql, rm, pss);
+        if (list.isEmpty()) {
             return null;
         }
-        return result.get(0);
+        return list.get(0);
     }
 
-
-    public <T> T executeQuery(String sql, RowMapper<T> rm,  Object... parameters) throws DataAccessException {
-        return this.queryForObject(sql,createPreparedStatementSetter(parameters),rm);
+    public <T> T queryForObject(String sql, RowMapper<T> rm, Object... parameters) {
+        return queryForObject(sql, rm, createPreparedStatementSetter(parameters));
     }
 
-    public <T> List<T> executeQueryForList(String sql, RowMapper<T> rm,  Object... parameters) throws DataAccessException {
-        return this.query(sql,createPreparedStatementSetter(parameters),rm);
+    public <T> List<T> query(String sql, RowMapper<T> rm, PreparedStatementSetter pss) throws DataAccessException {
+        ResultSet rs = null;
+        try (Connection conn = ConnectionManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pss.setParameters(pstmt);
+            rs = pstmt.executeQuery();
+
+            List<T> list = new ArrayList<T>();
+            while (rs.next()) {
+                list.add(rm.mapRow(rs));
+            }
+            return list;
+        } catch (SQLException e) {
+            throw new DataAccessException(e);
+        } finally {
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+            } catch (SQLException e) {
+                throw new DataAccessException(e);
+            }
+        }
     }
 
-    private PreparedStatementSetter createPreparedStatementSetter(Object[] parameters) {
+    public <T> List<T> query(String sql, RowMapper<T> rm, Object... parameters) {
+        return query(sql, rm, createPreparedStatementSetter(parameters));
+    }
+
+    private PreparedStatementSetter createPreparedStatementSetter(Object... parameters) {
         return pstmt -> {
             for (int i = 0; i < parameters.length; i++) {
-                pstmt.setObject(i+1, parameters[i]);
+                pstmt.setObject(i + 1, parameters[i]);
             }
-            return pstmt;
         };
     }
 }
