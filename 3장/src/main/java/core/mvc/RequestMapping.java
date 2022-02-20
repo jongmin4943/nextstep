@@ -3,6 +3,7 @@ package core.mvc;
 import java.util.HashMap;
 import java.util.Map;
 
+import next.controller.qna.AddAnswerController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,6 +33,7 @@ public class RequestMapping {
         mappings.put("/users/updateForm", new UpdateFormUserController());
         mappings.put("/users/update", new UpdateUserController());
         mappings.put("/qna/show", new ShowController());
+        mappings.put("/api/qna/addAnswer", new AddAnswerController());
 
         logger.info("Initialized Request Mapping!");
     }
