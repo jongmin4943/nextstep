@@ -2,7 +2,6 @@ package core.mvc;
 
 import java.io.IOException;
 
-import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -35,7 +34,7 @@ public class DispatcherServlet extends HttpServlet {
         ModelAndView mav;
         try {
             mav = controller.execute(req, resp);
-            View view = mav.GetView();
+            View view = mav.getView();
             view.render(mav.getModel(),req,resp);
         } catch (Throwable e) {
             logger.error("Exception : {}", e);

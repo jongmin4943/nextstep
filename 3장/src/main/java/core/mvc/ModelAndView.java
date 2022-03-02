@@ -20,7 +20,7 @@ public class ModelAndView  {
         return Collections.unmodifiableMap(model);
     }
 
-    public View GetView() {
+    public View getView() {
         return view;
     }
 }
