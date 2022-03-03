@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import next.controller.qna.AddAnswerController;
+import next.controller.qna.ApiListQuestionController;
 import next.controller.qna.CreateQuestionController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +36,7 @@ public class RequestMapping {
         mappings.put("/users/update", new UpdateUserController());
         mappings.put("/qna/show", new ShowController());
         mappings.put("/api/qna/addAnswer", new AddAnswerController());
+        mappings.put("/api/qna/list", new ApiListQuestionController());
         mappings.put("/qna/createQuestion", new CreateQuestionController());
 
         logger.info("Initialized Request Mapping!");
