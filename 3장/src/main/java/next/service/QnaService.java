@@ -12,8 +12,8 @@ import next.model.User;
 public class QnaService {
     private static QnaService qnaService;
 
-    private QuestionDao questionDao = new QuestionDao();
-    private AnswerDao answerDao = new AnswerDao();
+    private QuestionDao questionDao = QuestionDao.getInstance();
+    private AnswerDao answerDao = AnswerDao.getInstance();
 
     private QnaService() {
     }
