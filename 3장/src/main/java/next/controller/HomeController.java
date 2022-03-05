@@ -9,7 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 public class HomeController extends AbstractController {
     @Override
     public ModelAndView execute(HttpServletRequest req, HttpServletResponse resp) throws Exception {
-        QuestionDao questionDao = new QuestionDao();
+        QuestionDao questionDao = QuestionDao.getInstance();
         return jspView("home.jsp").addObject("questions", questionDao.findAll());
     }
 }
